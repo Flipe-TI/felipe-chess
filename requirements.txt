@@ -1,0 +1,4 @@
+# felipe-chess — pinned deps (reprodutibilidade; ver BRAINSTORM.md)
+# Fatia 1: encoding.py + parity test. Só o núcleo por ora (YAGNI).
+numpy==2.3.0
+pytest==8.3.4

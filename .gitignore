@@ -1,0 +1,35 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# --- Virtual envs (keep OUT of git; ideally out of OneDrive too) ---
+.venv/
+venv/
+env/
+ENV/
+
+# --- ML data & artifacts (heavy — NEVER commit; see BRAINSTORM.md) ---
+data/lichess/          # sampled base corpus (large, script-downloaded)
+models/                # checkpoints + exported .onnx (published to the site, not tracked here)
+*.ckpt
+*.pt
+*.pth
+runs/                  # training logs / tensorboard
+wandb/
+# NOTE: data/felipe/ (small PGN of Felipe's own games) IS versioned — do not ignore it.
+
+# --- OS / editors ---
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+
