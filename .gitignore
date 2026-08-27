@@ -17,12 +17,18 @@ env/
 ENV/
 
 # --- ML data & artifacts (heavy — NEVER commit; see BRAINSTORM.md) ---
-data/lichess/          # sampled base corpus (large, script-downloaded)
-models/                # checkpoints + exported .onnx (published to the site, not tracked here)
+# (comentários em linha PRÓPRIA — git não suporta comentário inline no padrão)
+# sampled base corpus (large, script-downloaded)
+data/lichess/
+# shards de treino derivados (regeneráveis via build_dataset)
+data/processed/
+# checkpoints + exported .onnx (published to the site, not tracked here)
+models/
 *.ckpt
 *.pt
 *.pth
-runs/                  # training logs / tensorboard
+# training logs / tensorboard
+runs/
 wandb/
 # NOTE: data/felipe/ (small PGN of Felipe's own games) IS versioned — do not ignore it.
 
