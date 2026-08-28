@@ -101,7 +101,9 @@ O modelo fala exatamente a língua que o site espera:
 | Dataset | 386 partidas rapid → **12.076 amostras** (só os meus lances) |
 | Modelo | `PolicyNet` (5 blocos residuais, 64 filtros) — **385k params, 1.54 MB** |
 | **Holdout top-1 move-match** | **31,5%** |
-| **Holdout top-3 move-match** | **44,5%** |
+| **Holdout top-3 move-match** | **48,8%** |
+
+*(holdout dividido por partida — sem vazamento game-level, número honesto.)*
 
 *Numa posição há ~30 lances legais; acertar o meu lance exato 31,5% das vezes
 está bem acima do acaso (~3%). A métrica é "parece comigo", não Elo.*
