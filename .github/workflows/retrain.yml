@@ -1,0 +1,132 @@
+# Retrain diário do modelo felipe-chess (MLOps).
+#
+# O que faz, 1x/dia:
+#   fetch de novas partidas → (se houver) retreina → exporta ONNX →
+#   guard "só se melhorar" → publica model.onnx no repo do site → commita
+#   as partidas novas e o baseline de volta aqui.
+#
+# Pré-requisito (setup manual, uma vez):
+#   Secret `SITE_PUBLISH_TOKEN` = PAT fine-grained com `contents:write` no
+#   repo do site (Flipe-TI/Flipe-TI.github.io). Sem ele, a etapa de publicação
+#   falha — o resto do pipeline roda normalmente.
+
+name: retrain
+
+on:
+  schedule:
+    - cron: "0 6 * * *" # todo dia 06:00 UTC (~03:00 BRT)
+  workflow_dispatch: {} # permite rodar manualmente pela aba Actions
+
+permissions:
+  contents: write # para commitar partidas/baseline de volta neste repo
+
+concurrency:
+  group: retrain
+  cancel-in-progress: false
+
+env:
+  PYTHONPATH: src
+
+jobs:
+  retrain:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout felipe-chess
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Instala dependências (torch CPU)
+        run: |
+          python -m pip install --upgrade pip
+          pip install --index-url https://download.pytorch.org/whl/cpu \
+                      --extra-index-url https://pypi.org/simple \
+                      -r requirements.txt
+
+      - name: Testes (parity + unit) — gate de qualidade
+        run: pytest -q
+
+      - name: Fetch de novas partidas
+        id: fetch
+        run: |
+          python -m felipe_chess.fetch_chesscom --out data/felipe
+          git add data/felipe
+          if git diff --cached --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "Sem partidas novas — nada a fazer hoje."
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build do dataset
+        if: steps.fetch.outputs.changed == 'true'
+        run: python -m felipe_chess.build_dataset --pgn-dir data/felipe --out data/processed
+
+      - name: Treina
+        if: steps.fetch.outputs.changed == 'true'
+        run: python -m felipe_chess.train --data data/processed --out models
+
+      - name: Exporta ONNX (com parity ONNX↔PyTorch)
+        if: steps.fetch.outputs.changed == 'true'
+        run: python -m felipe_chess.export_onnx --checkpoint models/policy.pt --out models/model.onnx
+
+      - name: Guard — publica só se o holdout top-1 não piorar
+        id: guard
+        if: steps.fetch.outputs.changed == 'true'
+        run: |
+          if python -c "import sys; from felipe_chess.mlops import should_publish; sys.exit(0 if should_publish('models/metrics.json','mlops/published_metrics.json') else 1)"; then
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+            echo "Modelo novo não melhorou — não publica."
+          fi
+
+      - name: Gera meta.json do site
+        if: steps.guard.outputs.publish == 'true'
+        run: python -c "import json; from felipe_chess.mlops import build_site_meta; m=json.load(open('models/metrics.json')); json.dump(build_site_meta(m), open('models/site_meta.json','w'), indent=2)"
+
+      - name: Checkout do repo do site
+        if: steps.guard.outputs.publish == 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: Flipe-TI/Flipe-TI.github.io
+          token: ${{ secrets.SITE_PUBLISH_TOKEN }}
+          path: site
+
+      - name: Publica model.onnx no site
+        if: steps.guard.outputs.publish == 'true'
+        run: |
+          DEST=site/assets/models/felipe-chess
+          cp models/model.onnx "$DEST/model.onnx"
+          cp models/site_meta.json "$DEST/meta.json"
+          cd site
+          git config user.name "Felipe Gabriel"
+          git config user.email "felipe@felipegabriel.dev"
+          git add assets/models/felipe-chess/model.onnx assets/models/felipe-chess/meta.json
+          if git diff --cached --quiet; then
+            echo "Modelo idêntico ao publicado — nada a fazer."
+          else
+            git commit -m "chore: atualiza modelo felipe-chess (retrain automático)"
+            git push
+          fi
+
+      - name: Atualiza baseline publicado
+        if: steps.guard.outputs.publish == 'true'
+        run: cp models/metrics.json mlops/published_metrics.json
+
+      - name: Commit de volta no felipe-chess (partidas + baseline)
+        if: steps.fetch.outputs.changed == 'true'
+        run: |
+          git config user.name "Felipe Gabriel"
+          git config user.email "felipe@felipegabriel.dev"
+          git add data/felipe mlops/published_metrics.json
+          if git diff --cached --quiet; then
+            echo "Nada a commitar."
+          else
+            git commit -m "chore: retrain diário (novas partidas + baseline)"
+            git push
+          fi
