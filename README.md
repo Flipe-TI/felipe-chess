@@ -1,14 +1,15 @@
 # felipe-chess
 
-**Um motor de xadrez que joga como eu.** Uma rede neural de política treinada por
+**Um motor de xadrez que joga de forma ruim que nem eu. :)** Uma rede neural de política treinada por
 *behavior cloning* das minhas partidas reais no Chess.com — treinada para prever
 **o lance que eu jogaria**, não o melhor lance. O modelo roda no navegador (ONNX)
 na demo jogável do meu portfólio.
 
 ▶️ **Jogue contra o bot:** [curriculo.felipegabriel.dev](https://curriculo.felipegabriel.dev) → seção *"Joga comigo"*
 
-> Não é um motor forte — é isso que é o ponto. Ele imita meu estilo, minhas
-> aberturas e meu nível (~850 rapid). Fraco e autêntico > forte e genérico.
+> Não é um motor que visa a vitoria — é isso que é o ponto. Ele imita meu estilo, minhas
+> aberturas e meu nível (~850 rapid). Então ele vai ser "ruimzinho" mesmo, tanto pela minha qualidade 
+> (que já é baixa xD), quanto pela quantidade de partidas do meu historico no chess.com
 
 ---
 
@@ -107,13 +108,13 @@ está bem acima do acaso (~3%). A métrica é "parece comigo", não Elo.*
 
 ## Limitações
 
-- **Poucos dados** de um só jogador → propenso a overfit (mitigado como acima).
-- **Fraco por design** — reproduz os erros e hábitos de um jogador ~850. Feature,
-  não bug.
+- **Poucos dados**  → propenso a overfit (mitigado como acima).
+- **Fraco por design** — reproduz os erros e hábitos de um jogador ~850. È uma Feature,
+   o bug sou eu que jogo ruim mesmo.
 - A saída são **logits** (sem softmax); o decode para lance concreto exige
   máscara de legalidade downstream (o site faz isso).
-- Evolui com o tempo: conforme jogo mais, o dataset cresce e o modelo é
-  retreinado.
+
+>Diante destas limitações contrui para evoluir com o tempo: conforme jogo mais, o dataset cresce e o modelo é retreinado diariamente. Isso não significa que irá ficar mais forte e sim mais parecido com minhas escolhas, agora se eu melhorar a tendencia é que ele melhore também (mas cá entre nos, acho dificil).
 
 ## Como rodar
 
