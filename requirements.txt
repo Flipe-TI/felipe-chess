@@ -5,4 +5,7 @@ chess==1.11.2
 # torch CPU: instale com o index da PyTorch pra pegar a wheel +cpu:
 #   pip install torch==2.13.0 --index-url https://download.pytorch.org/whl/cpu
 torch==2.13.0
+# export ONNX + parity numérica
+onnx==1.22.0
+onnxruntime==1.29.0
 pytest==8.3.4

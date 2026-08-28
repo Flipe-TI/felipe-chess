@@ -114,6 +114,7 @@ def train_model(
     ckpt_path = out_dir / checkpoint
     history: list[dict] = []
     best_top1 = float("-inf")
+    best_top3 = float("-inf")
 
     for epoch in range(epochs):
         model.train()
@@ -135,6 +136,7 @@ def train_model(
 
         if ho["top1"] > best_top1:
             best_top1 = ho["top1"]
+            best_top3 = ho["top3"]
             torch.save(
                 {"state_dict": model.state_dict(),
                  "channels": channels, "blocks": blocks,
@@ -145,10 +147,20 @@ def train_model(
         if stopper.update(ho["top1"]):
             break
 
+    metrics = {
+        "holdout_top1": best_top1,
+        "holdout_top3": best_top3,
+        "epochs": len(history),
+        "n_train": len(ytr),
+        "n_holdout": len(yho),
+    }
+    (out_dir / "metrics.json").write_text(json.dumps(metrics, indent=2), encoding="utf-8")
+
     return {
         "history": history,
         "best": {"holdout_top1": best_top1},
         "checkpoint": checkpoint,
+        "metrics": metrics,
     }
 
 

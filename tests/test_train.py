@@ -1,6 +1,8 @@
 """Testes do train.py: métricas top-k (puras), avaliação, early stopping e o
 loop de treino end-to-end em dados minúsculos (aprende + salva checkpoint).
 """
+import json
+
 import numpy as np
 import torch
 
@@ -79,3 +81,8 @@ def test_train_model_learns_and_saves_checkpoint(tmp_path):
     # Overfit dos 8 exemplos de treino: top-1 de treino chega alto.
     assert result["history"][-1]["train_top1"] >= 0.99
     assert len(result["history"]) <= 60
+
+    # persiste metrics.json (o guard do retrain lê isso)
+    metrics = json.loads((tmp_path / "models" / "metrics.json").read_text(encoding="utf-8"))
+    assert "holdout_top1" in metrics and "holdout_top3" in metrics
+    assert metrics["holdout_top1"] == result["best"]["holdout_top1"]

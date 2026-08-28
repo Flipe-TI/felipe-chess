@@ -1,0 +1,5 @@
+{
+  "holdout_top1": 0.315,
+  "holdout_top3": 0.445,
+  "note": "baseline do modelo publicado; o retrain diario so republica se holdout_top1 >= este valor"
+}
