@@ -10,6 +10,7 @@ from felipe_chess.build_dataset import (
     build_dataset,
     extract_samples,
     game_samples_from_pgn,
+    is_holdout,
 )
 
 PGN_WHITE = """[Event "t"]
@@ -86,6 +87,40 @@ def test_build_dataset_writes_npz_and_meta(tmp_path):
     # 4 amostras, split 50/50 -> 2 + 2, sem sobreposição total.
     assert len(train["y"]) + len(holdout["y"]) == 4
     assert summary["n_total"] == 4
+
+
+PGN_GAME_A = """[Event "t"]
+[Site "Chess.com"]
+[White "felipoww"]
+[Black "opp"]
+[Link "https://www.chess.com/game/live/1"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 *
+"""
+
+
+def test_is_holdout_is_deterministic_and_key_based():
+    # Pura e estável: mesma chave -> mesmo resultado, sempre (garante que a
+    # atribuição de uma partida NÃO muda quando o dataset cresce).
+    k = "https://www.chess.com/game/live/1"
+    assert is_holdout(k, 0.1) == is_holdout(k, 0.1)
+    # frac=1.0 -> tudo holdout; frac=0.0 -> nada holdout
+    assert is_holdout(k, 1.0) is True
+    assert is_holdout(k, 0.0) is False
+
+
+def test_single_game_is_never_split(tmp_path):
+    # Anti-vazamento: TODAS as amostras de uma partida vão pro mesmo lado.
+    pgn_dir = tmp_path / "felipe"
+    pgn_dir.mkdir()
+    (pgn_dir / "a.pgn").write_text(PGN_GAME_A, encoding="utf-8")
+    out = tmp_path / "processed"
+    build_dataset(pgn_dir, out, player="felipoww", holdout_frac=0.5)
+
+    n_train = len(np.load(out / "train.npz")["y"])
+    n_hold = len(np.load(out / "holdout.npz")["y"])
+    assert n_train + n_hold == 4               # 4 lances do felipoww
+    assert (n_train == 0) != (n_hold == 0)     # exatamente UM lado vazio → não dividiu
 
 
 def test_build_dataset_split_is_deterministic(tmp_path):
