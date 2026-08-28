@@ -1,0 +1,2 @@
+date,n_games,n_samples,holdout_top1,holdout_top3,epochs,baseline_top1,published
+2026-08-28,386,12076,0.3149,0.4883,26,0.3149,True

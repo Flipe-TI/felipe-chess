@@ -114,6 +114,12 @@ jobs:
             git push
           fi
 
+      - name: Registra o retrain no histórico (CSV)
+        # Roda em TODO retrain (publicando ou não) e lê o baseline ANTES de
+        # atualizá-lo, para registrar contra o que este run foi comparado.
+        if: steps.fetch.outputs.changed == 'true'
+        run: python -c "from felipe_chess.mlops import append_run; append_run('mlops/history.csv','data/processed/meta.json','models/metrics.json','mlops/published_metrics.json', '${{ steps.guard.outputs.publish }}' == 'true')"
+
       - name: Atualiza baseline publicado
         if: steps.guard.outputs.publish == 'true'
         run: cp models/metrics.json mlops/published_metrics.json
@@ -123,7 +129,7 @@ jobs:
         run: |
           git config user.name "Felipe Gabriel"
           git config user.email "felipe.suporteti@hotmail.com"
-          git add data/felipe mlops/published_metrics.json
+          git add data/felipe mlops/published_metrics.json mlops/history.csv
           if git diff --cached --quiet; then
             echo "Nada a commitar."
           else
