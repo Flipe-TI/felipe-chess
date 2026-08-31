@@ -1,5 +1,7 @@
 {
-  "holdout_top1": 0.3148936162603662,
-  "holdout_top3": 0.488297871833152,
-  "note": "baseline do modelo publicado (split por partida); o retrain so republica se holdout_top1 >= este valor"
+  "holdout_top1": 0.3180851085388914,
+  "holdout_top3": 0.47659574670994537,
+  "epochs": 27,
+  "n_train": 11271,
+  "n_holdout": 940
 }
